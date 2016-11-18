@@ -1,0 +1,57 @@
+
+
+#How To Configure Bind as a Caching or Forwarding DNS Server
+1. Setting the hostname
+Edit /etc/hosts file so it looks like this
+
+127.0.0.1       localhost
+192.168.0.1     ns1.example.com ns1
+and for debian server:
+
+127.0.0.1       localhost
+192.168.0.2     ns2.example.com ns2
+then edit the /etc/hostname so it looks like this:
+
+ns1
+
+2. Instal BIND
+On the OpenWRT router from the ssh run the following:
+Uninstall preinstalled dnsmasq:
+
+/etc/init.d/dnsmasq stop
+opkg remove dnsmasq
+
+then install BIND
+
+opkg update
+opkg install bind-server bind-tools
+opkg install tcpdump
+opkg install libcap
+
+3. Configure the Master Bind Server
+On the OpenWRT box the bind directory structure is a bit different from the one on debian as there is only one file that holds all the config: /etc/bind/named.conf
+
+
+acl goodclients {
+        192.0.2.0/24;
+        localhost;
+        localnets;
+};
+
+options {
+        directory "/var/cache/bind";
+
+        recursion yes;
+        allow-query { goodclients; };
+
+        forwarders {
+                8.8.8.8;
+                8.8.4.4;
+        };
+        forward only;
+
+        dnssec-validation auto;
+
+        auth-nxdomain no;    # conform to RFC1035
+        listen-on-v6 { any; };
+};
